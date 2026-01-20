@@ -3,6 +3,7 @@ bin/
 obj/
 *.user
 *.suo
+*.sln
 
 ## Node / frontend
 node_modules/
