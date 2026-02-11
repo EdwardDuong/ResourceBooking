@@ -43,8 +43,16 @@ speculatively implemented now.
 ## Consequences
 - `TimeSlot` (see `ResourceBooking.Domain.Entities.TimeSlot`) validates that a
   start time aligns to the slot grid.
-- The EF Core configuration for `Booking` will add a unique index on
-  `(ResourceId, SlotStart)` when persistence is wired up.
+- `BookingConfiguration` adds a unique index on `(ResourceId, SlotStart)`,
+  filtered to exclude cancelled bookings so a freed-up slot can be rebooked
+  without the old, cancelled row permanently occupying it.
+- `BookingRepository.AddAsync` catches the resulting unique-index violation
+  and rethrows it as `BookingConflictException`, so callers never see a raw
+  `DbUpdateException`. Detection covers both SQL Server (production) and
+  SQLite (test suite) - see `UniqueConstraintViolationDetector`.
+- `BookingConcurrencyTests` (in `ResourceBooking.Infrastructure.Tests`) proves
+  the guarantee directly: two concurrent `AddAsync` calls for the same
+  resource/slot, exactly one succeeds.
 - A booking that spans multiple slots (e.g. a 45-minute meeting) is modeled as
-  multiple slot-bookings created within a single transaction - added as part
-  of the booking creation use case.
+  multiple slot-bookings created within a single transaction - not yet
+  implemented; `CreateBookingCommand` currently creates a single slot booking.

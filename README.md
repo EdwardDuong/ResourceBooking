@@ -4,9 +4,10 @@ A resource booking/reservation system built to demonstrate production-oriented
 engineering practices: clean architecture, tested domain logic, a documented
 concurrency strategy, containerized local development, and CI.
 
-**Status: early scaffold.** Domain model and conflict-prevention logic are the
-current focus; see `docs/adr/0001-time-slot-concurrency-strategy.md` for the
-concurrency design and the project's issues/board for what's in flight.
+**Status: core domain logic complete.** Conflict-prevention is implemented and
+tested end to end (domain -> persistence -> concurrency test); the REST API
+surface is next. See `docs/adr/0001-time-slot-concurrency-strategy.md` for the
+concurrency design.
 
 ## Problem
 
@@ -68,7 +69,7 @@ dotnet test
 ## Roadmap
 
 - [x] Project scaffolding, ADR-0001, CI skeleton
-- [ ] Booking conflict-prevention logic + unit tests
+- [x] Booking conflict-prevention logic + unit tests
 - [ ] REST API: resources CRUD, booking create/cancel, availability query
 - [ ] Auth (JWT) + role-based authorization
 - [ ] Frontend booking flow + admin dashboard
