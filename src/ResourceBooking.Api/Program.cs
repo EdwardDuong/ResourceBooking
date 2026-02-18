@@ -3,6 +3,7 @@ using ResourceBooking.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -22,8 +23,9 @@ app.UseHttpsRedirection();
 // Liveness/readiness probe for container orchestration and CI smoke checks.
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
 
+app.MapControllers();
+
 app.Run();
 
-// Exposed for WebApplicationFactory-based integration tests (added alongside
-// the first API endpoints in the next milestone).
+// Exposed for WebApplicationFactory-based integration tests.
 public partial class Program { }

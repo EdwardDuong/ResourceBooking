@@ -27,4 +27,7 @@ public class ResourceRepository : IResourceRepository
         await _dbContext.Resources.AddAsync(resource, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
+
+    public Task UpdateAsync(Resource resource, CancellationToken cancellationToken) =>
+        _dbContext.SaveChangesAsync(cancellationToken);
 }
