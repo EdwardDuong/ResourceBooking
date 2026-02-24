@@ -13,4 +13,17 @@ public interface IBookingRepository
     /// exception escape - see ADR-0001.
     /// </summary>
     Task AddAsync(Booking booking, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Persists changes made to a Booking previously loaded via
+    /// GetByIdAsync (e.g. Confirm/Cancel).
+    /// </summary>
+    Task UpdateAsync(Booking booking, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Slot start times already taken (Pending/Confirmed/Completed) for the
+    /// given resource within [fromUtc, toUtc) - used to compute availability.
+    /// </summary>
+    Task<IReadOnlyList<DateTimeOffset>> GetTakenSlotStartsAsync(
+        Guid resourceId, DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken cancellationToken);
 }
