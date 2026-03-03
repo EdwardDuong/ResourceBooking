@@ -36,12 +36,23 @@ public class BookingRepository : IBookingRepository
         _dbContext.SaveChangesAsync(cancellationToken);
 
     public async Task<IReadOnlyList<DateTimeOffset>> GetTakenSlotStartsAsync(
-        Guid resourceId, DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken cancellationToken) =>
-        await _dbContext.Bookings
-            .Where(b => b.ResourceId == resourceId
-                && b.Status != BookingStatus.Cancelled
-                && b.SlotStart >= fromUtc
-                && b.SlotStart < toUtc)
-            .Select(b => b.SlotStart)
+        Guid resourceId, DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken cancellationToken)
+    {
+        // Status filtering happens after the range query rather than in the
+        // SQL Where clause: the SQLite provider can't translate a comparison
+        // against an enum backed by a string value converter (it collapses
+        // to the underlying int and throws at query-compile time). The
+        // range query itself stays server-side - see BookingConfiguration
+        // for why SlotStart is stored as UTC DateTime rather than
+        // DateTimeOffset, which is what makes the range comparison
+        // translatable at all under SQLite.
+        var bookingsInRange = await _dbContext.Bookings
+            .Where(b => b.ResourceId == resourceId && b.SlotStart >= fromUtc && b.SlotStart < toUtc)
             .ToListAsync(cancellationToken);
+
+        return bookingsInRange
+            .Where(b => b.Status != BookingStatus.Cancelled)
+            .Select(b => b.SlotStart)
+            .ToList();
+    }
 }

@@ -23,8 +23,16 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
         builder.Property(b => b.RequestedByUserId)
             .IsRequired();
 
+        // Stored as UTC DateTime rather than DateTimeOffset: SQLite (used by
+        // the test suite) can't translate range comparisons on
+        // DateTimeOffset columns, only equality. All slot times are UTC
+        // anyway, so nothing is lost by normalizing at the persistence
+        // boundary instead of carrying an offset nothing uses.
         builder.Property(b => b.SlotStart)
-            .IsRequired();
+            .IsRequired()
+            .HasConversion(
+                toStore => toStore.UtcDateTime,
+                fromStore => new DateTimeOffset(fromStore, TimeSpan.Zero));
 
         builder.Property(b => b.Status)
             .IsRequired()
