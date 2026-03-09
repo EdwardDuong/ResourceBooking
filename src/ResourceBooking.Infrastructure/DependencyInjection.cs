@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using ResourceBooking.Application.Common.Interfaces;
 using ResourceBooking.Infrastructure.Persistence;
 using ResourceBooking.Infrastructure.Persistence.Repositories;
+using ResourceBooking.Infrastructure.Security;
 
 namespace ResourceBooking.Infrastructure;
 
@@ -17,6 +18,7 @@ public static class DependencyInjection
 
         services.AddScoped<IResourceRepository, ResourceRepository>();
         services.AddScoped<IBookingRepository, BookingRepository>();
+        services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
 
         return services;
     }
