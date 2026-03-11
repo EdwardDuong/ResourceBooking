@@ -26,7 +26,7 @@ public class BookingRepository : IBookingRepository
         {
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
-        catch (DbUpdateException ex) when (UniqueConstraintViolationDetector.IsSlotConflict(ex))
+        catch (DbUpdateException ex) when (UniqueConstraintViolationDetector.IsUniqueConstraintViolation(ex))
         {
             throw new BookingConflictException(booking.ResourceId, booking.SlotStart);
         }

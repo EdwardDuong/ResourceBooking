@@ -14,7 +14,7 @@ internal static class UniqueConstraintViolationDetector
     private const int SqlServerUniqueConstraintViolation = 2627;
     private const int SqlServerUniqueIndexViolation = 2601;
 
-    public static bool IsSlotConflict(DbUpdateException ex)
+    public static bool IsUniqueConstraintViolation(DbUpdateException ex)
     {
         if (ex.InnerException is SqlException sqlEx)
         {

@@ -18,6 +18,7 @@ public static class DependencyInjection
 
         services.AddScoped<IResourceRepository, ResourceRepository>();
         services.AddScoped<IBookingRepository, BookingRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
 
         return services;
