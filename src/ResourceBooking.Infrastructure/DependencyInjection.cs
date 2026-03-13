@@ -21,6 +21,9 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
 
+        services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
+        services.AddScoped<ITokenGenerator, JwtTokenGenerator>();
+
         return services;
     }
 }

@@ -57,8 +57,10 @@ public class GlobalExceptionHandler : IExceptionHandler
     private static (int StatusCode, string Title) MapToResponse(Exception exception) => exception switch
     {
         NotFoundException => (StatusCodes.Status404NotFound, "Not Found"),
+        InvalidCredentialsException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
         BookingConflictException => (StatusCodes.Status409Conflict, "Booking Conflict"),
         ResourceInactiveException => (StatusCodes.Status409Conflict, "Resource Inactive"),
+        DuplicateEmailException => (StatusCodes.Status409Conflict, "Email Already Registered"),
         ValidationException => (StatusCodes.Status400BadRequest, "Validation Failed"),
         DomainException => (StatusCodes.Status400BadRequest, "Bad Request"),
         _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred"),
