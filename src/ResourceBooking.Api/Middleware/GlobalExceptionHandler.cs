@@ -58,6 +58,7 @@ public class GlobalExceptionHandler : IExceptionHandler
     {
         NotFoundException => (StatusCodes.Status404NotFound, "Not Found"),
         InvalidCredentialsException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
+        ForbiddenException => (StatusCodes.Status403Forbidden, "Forbidden"),
         BookingConflictException => (StatusCodes.Status409Conflict, "Booking Conflict"),
         ResourceInactiveException => (StatusCodes.Status409Conflict, "Resource Inactive"),
         DuplicateEmailException => (StatusCodes.Status409Conflict, "Email Already Registered"),

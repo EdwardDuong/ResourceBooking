@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ResourceBooking.Application.Resources;
 using ResourceBooking.Application.Resources.Commands.CreateResource;
@@ -9,6 +10,7 @@ using ResourceBooking.Application.Resources.Queries.GetResourceById;
 namespace ResourceBooking.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/resources")]
 public class ResourcesController : ControllerBase
 {
@@ -34,6 +36,7 @@ public class ResourcesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<Guid>> Create(
         [FromBody] CreateResourceCommand command, CancellationToken cancellationToken)
     {
@@ -42,6 +45,7 @@ public class ResourcesController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Deactivate(Guid id, CancellationToken cancellationToken)
     {
         await _sender.Send(new DeactivateResourceCommand(id), cancellationToken);

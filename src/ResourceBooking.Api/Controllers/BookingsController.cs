@@ -1,5 +1,8 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ResourceBooking.Api.Common;
+using ResourceBooking.Api.Contracts;
 using ResourceBooking.Application.Bookings.Commands.CancelBooking;
 using ResourceBooking.Application.Bookings.Commands.CreateBooking;
 using ResourceBooking.Application.Bookings.Queries.GetAvailability;
@@ -7,6 +10,7 @@ using ResourceBooking.Application.Bookings.Queries.GetAvailability;
 namespace ResourceBooking.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/bookings")]
 public class BookingsController : ControllerBase
 {
@@ -19,8 +23,9 @@ public class BookingsController : ControllerBase
 
     [HttpPost]
     public async Task<ActionResult<Guid>> Create(
-        [FromBody] CreateBookingCommand command, CancellationToken cancellationToken)
+        [FromBody] CreateBookingRequest request, CancellationToken cancellationToken)
     {
+        var command = new CreateBookingCommand(request.ResourceId, User.GetUserId(), request.SlotStart);
         var id = await _sender.Send(command, cancellationToken);
         return Created($"/api/bookings/{id}", id);
     }
@@ -28,7 +33,7 @@ public class BookingsController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Cancel(Guid id, CancellationToken cancellationToken)
     {
-        await _sender.Send(new CancelBookingCommand(id), cancellationToken);
+        await _sender.Send(new CancelBookingCommand(id, User.GetUserId(), User.IsAdmin()), cancellationToken);
         return NoContent();
     }
 

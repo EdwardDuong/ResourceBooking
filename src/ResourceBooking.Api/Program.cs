@@ -24,6 +24,10 @@ var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        // Keep claim types exactly as issued ("sub", not the mapped
+        // ClaimTypes.NameIdentifier URI) so claim reads elsewhere in the
+        // app aren't relying on an implicit remapping behavior.
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
