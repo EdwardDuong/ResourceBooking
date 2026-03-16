@@ -1,20 +1,25 @@
 using System.Net;
 using System.Net.Http.Json;
-using ResourceBooking.Application.Bookings.Commands.CreateBooking;
+using ResourceBooking.Api.Contracts;
 using ResourceBooking.Application.Bookings.Queries.GetAvailability;
 using ResourceBooking.Application.Resources.Commands.CreateResource;
 using Xunit;
 
 namespace ResourceBooking.Api.Tests;
 
-public class BookingsApiTests : IClassFixture<CustomWebApplicationFactory>
+public class BookingsApiTests : IClassFixture<CustomWebApplicationFactory>, IAsyncLifetime
 {
-    private readonly HttpClient _client;
+    private readonly CustomWebApplicationFactory _factory;
+    private HttpClient _client = null!;
 
     public BookingsApiTests(CustomWebApplicationFactory factory)
     {
-        _client = factory.CreateClient();
+        _factory = factory;
     }
+
+    public async Task InitializeAsync() => _client = await _factory.CreateAuthenticatedClientAsync(isAdmin: true);
+
+    public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
     public async Task Create_ForOpenSlot_Returns201()
@@ -23,7 +28,7 @@ public class BookingsApiTests : IClassFixture<CustomWebApplicationFactory>
         var slotStart = NextAlignedFutureSlot();
 
         var response = await _client.PostAsJsonAsync(
-            "/api/bookings", new CreateBookingCommand(resourceId, Guid.NewGuid(), slotStart));
+            "/api/bookings", new CreateBookingRequest(resourceId, slotStart));
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     }
@@ -35,11 +40,11 @@ public class BookingsApiTests : IClassFixture<CustomWebApplicationFactory>
         var slotStart = NextAlignedFutureSlot();
 
         var first = await _client.PostAsJsonAsync(
-            "/api/bookings", new CreateBookingCommand(resourceId, Guid.NewGuid(), slotStart));
+            "/api/bookings", new CreateBookingRequest(resourceId, slotStart));
         Assert.Equal(HttpStatusCode.Created, first.StatusCode);
 
         var second = await _client.PostAsJsonAsync(
-            "/api/bookings", new CreateBookingCommand(resourceId, Guid.NewGuid(), slotStart));
+            "/api/bookings", new CreateBookingRequest(resourceId, slotStart));
 
         Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
     }
@@ -51,9 +56,21 @@ public class BookingsApiTests : IClassFixture<CustomWebApplicationFactory>
         var unalignedSlot = NextAlignedFutureSlot().AddMinutes(1);
 
         var response = await _client.PostAsJsonAsync(
-            "/api/bookings", new CreateBookingCommand(resourceId, Guid.NewGuid(), unalignedSlot));
+            "/api/bookings", new CreateBookingRequest(resourceId, unalignedSlot));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Create_WithoutAuthToken_Returns401()
+    {
+        var anonymousClient = _factory.CreateClient();
+        var resourceId = await CreateResourceAsync();
+
+        var response = await anonymousClient.PostAsJsonAsync(
+            "/api/bookings", new CreateBookingRequest(resourceId, NextAlignedFutureSlot()));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]
@@ -63,15 +80,31 @@ public class BookingsApiTests : IClassFixture<CustomWebApplicationFactory>
         var slotStart = NextAlignedFutureSlot();
 
         var createResponse = await _client.PostAsJsonAsync(
-            "/api/bookings", new CreateBookingCommand(resourceId, Guid.NewGuid(), slotStart));
+            "/api/bookings", new CreateBookingRequest(resourceId, slotStart));
         var bookingId = await createResponse.Content.ReadFromJsonAsync<Guid>();
 
         var cancelResponse = await _client.DeleteAsync($"/api/bookings/{bookingId}");
         Assert.Equal(HttpStatusCode.NoContent, cancelResponse.StatusCode);
 
         var rebookResponse = await _client.PostAsJsonAsync(
-            "/api/bookings", new CreateBookingCommand(resourceId, Guid.NewGuid(), slotStart));
+            "/api/bookings", new CreateBookingRequest(resourceId, slotStart));
         Assert.Equal(HttpStatusCode.Created, rebookResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task Cancel_ByNonOwnerNonAdmin_Returns403()
+    {
+        var resourceId = await CreateResourceAsync();
+        var slotStart = NextAlignedFutureSlot();
+
+        var createResponse = await _client.PostAsJsonAsync(
+            "/api/bookings", new CreateBookingRequest(resourceId, slotStart));
+        var bookingId = await createResponse.Content.ReadFromJsonAsync<Guid>();
+
+        var otherMemberClient = await _factory.CreateAuthenticatedClientAsync();
+        var cancelResponse = await otherMemberClient.DeleteAsync($"/api/bookings/{bookingId}");
+
+        Assert.Equal(HttpStatusCode.Forbidden, cancelResponse.StatusCode);
     }
 
     [Fact]
@@ -81,7 +114,7 @@ public class BookingsApiTests : IClassFixture<CustomWebApplicationFactory>
         var slotStart = NextAlignedFutureSlot();
 
         await _client.PostAsJsonAsync(
-            "/api/bookings", new CreateBookingCommand(resourceId, Guid.NewGuid(), slotStart));
+            "/api/bookings", new CreateBookingRequest(resourceId, slotStart));
 
         var date = DateOnly.FromDateTime(slotStart.UtcDateTime);
         var response = await _client.GetAsync($"/api/bookings/availability?resourceId={resourceId}&date={date:yyyy-MM-dd}");

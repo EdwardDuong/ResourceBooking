@@ -6,14 +6,19 @@ using Xunit;
 
 namespace ResourceBooking.Api.Tests;
 
-public class ResourcesApiTests : IClassFixture<CustomWebApplicationFactory>
+public class ResourcesApiTests : IClassFixture<CustomWebApplicationFactory>, IAsyncLifetime
 {
-    private readonly HttpClient _client;
+    private readonly CustomWebApplicationFactory _factory;
+    private HttpClient _client = null!;
 
     public ResourcesApiTests(CustomWebApplicationFactory factory)
     {
-        _client = factory.CreateClient();
+        _factory = factory;
     }
+
+    public async Task InitializeAsync() => _client = await _factory.CreateAuthenticatedClientAsync(isAdmin: true);
+
+    public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
     public async Task Create_WithValidName_Returns201AndAppearsInActiveList()
