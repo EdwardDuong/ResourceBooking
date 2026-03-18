@@ -4,11 +4,12 @@ A resource booking/reservation system built to demonstrate production-oriented
 engineering practices: clean architecture, tested domain logic, a documented
 concurrency strategy, containerized local development, and CI.
 
-**Status: core REST API complete.** Resources and bookings are fully wired up
-end to end - domain, persistence, MediatR use cases, controllers, and three
-levels of automated tests (domain, persistence/concurrency, HTTP). Auth is
-next. See `docs/adr/0001-time-slot-concurrency-strategy.md` for the
-concurrency design.
+**Status: JWT auth and role-based authorization complete.** Every endpoint
+except `/api/auth/*` and `/health` requires a bearer token; resource
+mutations require the Admin role; booking cancellation requires the caller
+to own the booking (or be Admin). Frontend integration is next. See
+`docs/adr/0001-time-slot-concurrency-strategy.md` for the concurrency
+design.
 
 ## Problem
 
@@ -46,6 +47,15 @@ frontend/                         - React + TypeScript client
 
 Prerequisites: .NET 8 SDK, Node.js 18+, Docker.
 
+`appsettings.json` ships with placeholder values for the DB password and JWT
+signing key - real values go in user secrets, never committed:
+
+```bash
+cd src/ResourceBooking.Api
+dotnet user-secrets set "ConnectionStrings:Default" "Server=localhost,1433;Database=ResourceBooking;User Id=sa;Password=<your-password>;TrustServerCertificate=true;"
+dotnet user-secrets set "Jwt:SigningKey" "<32+ random bytes, base64 or plain - anything the placeholder length check will pass>"
+```
+
 ```bash
 # regenerate the solution file and wire up project references locally
 ./scripts/bootstrap-solution.sh
@@ -76,27 +86,35 @@ the same locally and in CI.
 
 ## API
 
-| Method | Route                              | Description                          |
-|--------|-------------------------------------|---------------------------------------|
-| GET    | `/api/resources`                    | List active resources                 |
-| GET    | `/api/resources/{id}`               | Get a resource by id                  |
-| POST   | `/api/resources`                    | Create a resource                     |
-| DELETE | `/api/resources/{id}`               | Deactivate a resource                 |
-| POST   | `/api/bookings`                     | Create a booking                      |
-| DELETE | `/api/bookings/{id}`                | Cancel a booking                      |
-| GET    | `/api/bookings/availability`        | Slot availability for a resource/day  |
+| Method | Route                        | Auth           | Description                          |
+|--------|------------------------------|----------------|---------------------------------------|
+| POST   | `/api/auth/register`         | none           | Create an account (Member), returns a token |
+| POST   | `/api/auth/login`             | none           | Returns a token                       |
+| GET    | `/api/resources`              | any user       | List active resources                 |
+| GET    | `/api/resources/{id}`         | any user       | Get a resource by id                  |
+| POST   | `/api/resources`              | Admin          | Create a resource                     |
+| DELETE | `/api/resources/{id}`         | Admin          | Deactivate a resource                 |
+| POST   | `/api/bookings`                | any user       | Create a booking for yourself         |
+| DELETE | `/api/bookings/{id}`           | owner or Admin | Cancel a booking                      |
+| GET    | `/api/bookings/availability`   | any user       | Slot availability for a resource/day  |
+
+Send the token from register/login as `Authorization: Bearer <token>`. There
+is no client-facing way to register as Admin - seed one directly or promote
+via the database; letting registration accept a role would be a privilege
+escalation bug.
 
 Errors are returned as `application/problem+json` (see
-`GlobalExceptionHandler`): 404 for missing entities, 409 for booking
-conflicts and inactive-resource bookings, 400 for validation failures with a
-per-field `errors` object.
+`GlobalExceptionHandler`): 401 for missing/invalid credentials, 403 for
+authenticated-but-not-permitted, 404 for missing entities, 409 for booking
+conflicts, inactive-resource bookings and duplicate emails, 400 for
+validation failures with a per-field `errors` object.
 
 ## Roadmap
 
 - [x] Project scaffolding, ADR-0001, CI skeleton
 - [x] Booking conflict-prevention logic + unit tests
 - [x] REST API: resources CRUD, booking create/cancel, availability query
-- [ ] Auth (JWT) + role-based authorization
+- [x] Auth (JWT) + role-based authorization
 - [ ] Frontend booking flow + admin dashboard
 - [ ] Background reminder notifications, availability caching
 - [ ] CI/CD deployment to Azure
