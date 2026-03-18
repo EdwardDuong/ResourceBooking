@@ -26,4 +26,10 @@ public interface IBookingRepository
     /// </summary>
     Task<IReadOnlyList<DateTimeOffset>> GetTakenSlotStartsAsync(
         Guid resourceId, DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// A user's bookings, most recent slot first. Includes cancelled
+    /// bookings - the caller decides whether to show them.
+    /// </summary>
+    Task<IReadOnlyList<Booking>> GetByUserAsync(Guid userId, CancellationToken cancellationToken);
 }

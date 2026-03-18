@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using ResourceBooking.Api.Contracts;
+using ResourceBooking.Application.Bookings;
 using ResourceBooking.Application.Bookings.Queries.GetAvailability;
 using ResourceBooking.Application.Resources.Commands.CreateResource;
 using Xunit;
@@ -122,6 +123,23 @@ public class BookingsApiTests : IClassFixture<CustomWebApplicationFactory>, IAsy
 
         var takenSlot = availability!.Slots.Single(s => s.SlotStart == slotStart);
         Assert.False(takenSlot.IsAvailable);
+    }
+
+    [Fact]
+    public async Task GetMine_OnlyReturnsCallersOwnBookings()
+    {
+        var resourceId = await CreateResourceAsync();
+        var mySlot = NextAlignedFutureSlot();
+        await _client.PostAsJsonAsync("/api/bookings", new CreateBookingRequest(resourceId, mySlot));
+
+        var otherMemberClient = await _factory.CreateAuthenticatedClientAsync();
+        await otherMemberClient.PostAsJsonAsync(
+            "/api/bookings", new CreateBookingRequest(resourceId, mySlot.AddMinutes(15)));
+
+        var response = await _client.GetAsync("/api/bookings/mine");
+        var bookings = await response.Content.ReadFromJsonAsync<List<BookingDto>>();
+
+        Assert.Single(bookings!, b => b.SlotStart == mySlot);
     }
 
     private async Task<Guid> CreateResourceAsync()

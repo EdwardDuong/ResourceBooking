@@ -55,4 +55,10 @@ public class BookingRepository : IBookingRepository
             .Select(b => b.SlotStart)
             .ToList();
     }
+
+    public async Task<IReadOnlyList<Booking>> GetByUserAsync(Guid userId, CancellationToken cancellationToken) =>
+        await _dbContext.Bookings
+            .Where(b => b.RequestedByUserId == userId)
+            .OrderByDescending(b => b.SlotStart)
+            .ToListAsync(cancellationToken);
 }

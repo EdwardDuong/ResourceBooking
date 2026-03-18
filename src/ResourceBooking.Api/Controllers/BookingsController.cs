@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ResourceBooking.Api.Common;
 using ResourceBooking.Api.Contracts;
+using ResourceBooking.Application.Bookings;
 using ResourceBooking.Application.Bookings.Commands.CancelBooking;
 using ResourceBooking.Application.Bookings.Commands.CreateBooking;
 using ResourceBooking.Application.Bookings.Queries.GetAvailability;
+using ResourceBooking.Application.Bookings.Queries.GetMyBookings;
 
 namespace ResourceBooking.Api.Controllers;
 
@@ -43,5 +45,12 @@ public class BookingsController : ControllerBase
     {
         var availability = await _sender.Send(new GetAvailabilityQuery(resourceId, date), cancellationToken);
         return Ok(availability);
+    }
+
+    [HttpGet("mine")]
+    public async Task<ActionResult<IReadOnlyList<BookingDto>>> GetMine(CancellationToken cancellationToken)
+    {
+        var bookings = await _sender.Send(new GetMyBookingsQuery(User.GetUserId()), cancellationToken);
+        return Ok(bookings);
     }
 }
