@@ -3,6 +3,7 @@ import { AuthProvider } from './auth/AuthContext'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { Layout } from './components/Layout'
 import { LoginPage } from './pages/LoginPage'
+import { MyBookingsPage } from './pages/MyBookingsPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { ResourcesPage } from './pages/ResourcesPage'
 import './App.css'
@@ -20,6 +21,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ResourcesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-bookings"
+              element={
+                <ProtectedRoute>
+                  <MyBookingsPage />
                 </ProtectedRoute>
               }
             />
