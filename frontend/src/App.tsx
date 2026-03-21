@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthContext'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { Layout } from './components/Layout'
+import { AdminResourcesPage } from './pages/AdminResourcesPage'
 import { LoginPage } from './pages/LoginPage'
 import { MyBookingsPage } from './pages/MyBookingsPage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -29,6 +30,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <MyBookingsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/resources"
+              element={
+                <ProtectedRoute requireRole="Admin">
+                  <AdminResourcesPage />
                 </ProtectedRoute>
               }
             />

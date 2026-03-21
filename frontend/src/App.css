@@ -96,6 +96,30 @@ button:disabled {
   font-size: 14px;
 }
 
+.admin-create-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.admin-create-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.admin-create-form input {
+  font: inherit;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+}
+
 .card {
   border: 1px solid var(--border);
   border-radius: 8px;
