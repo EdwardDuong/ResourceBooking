@@ -1,32 +1,53 @@
-# React + TypeScript + Vite
+# Resource Booking - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React + TypeScript client for the Resource Booking API.
 
-Currently, two official plugins are available:
+## Structure
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```
+src/
+  api/          fetch wrapper, ProblemDetails-aware error handling, typed endpoint calls
+  auth/         AuthContext (login/register/logout, token persistence), ProtectedRoute
+  components/   shared UI (Layout/nav, AvailabilityGrid)
+  pages/        one component per route
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Routes
+
+| Path              | Access       | Page               |
+|--------------------|--------------|---------------------|
+| `/login`           | public       | LoginPage           |
+| `/register`        | public       | RegisterPage        |
+| `/`                | any user     | ResourcesPage - browse resources, pick a date, book a slot |
+| `/my-bookings`     | any user     | MyBookingsPage - list own bookings, cancel |
+| `/admin/resources` | Admin only   | AdminResourcesPage - create/deactivate resources |
+
+`ProtectedRoute` redirects unauthenticated visitors to `/login`, and redirects
+non-Admin users away from `/admin/resources` to `/`.
+
+## Local development
+
+```bash
+npm install
+npm run dev
+```
+
+The dev server proxies `/api/*` to `https://localhost:5001` (see
+`vite.config.ts`) so the backend must be running for API calls to succeed -
+see the root README for how to start it. There's no CORS setup because of
+this proxy; production deployment (a different origin) is a separate,
+not-yet-done milestone.
+
+## Auth
+
+The JWT returned by `/api/auth/login` and `/api/auth/register` is stored in
+`localStorage` and decoded client-side (in `AuthContext`) purely to restore
+`{ userId, email, role }` after a page reload - the backend re-validates the
+token's signature on every request regardless, so nothing security-relevant
+depends on that decode.
+
+## Testing
+
+Not set up yet. Backend correctness (including everything these API calls
+depend on - auth, validation, conflict handling) is covered by the three
+xunit test projects in `../tests`.

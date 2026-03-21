@@ -4,12 +4,12 @@ A resource booking/reservation system built to demonstrate production-oriented
 engineering practices: clean architecture, tested domain logic, a documented
 concurrency strategy, containerized local development, and CI.
 
-**Status: JWT auth and role-based authorization complete.** Every endpoint
-except `/api/auth/*` and `/health` requires a bearer token; resource
-mutations require the Admin role; booking cancellation requires the caller
-to own the booking (or be Admin). Frontend integration is next. See
+**Status: frontend booking flow and admin dashboard complete.** The React
+client covers the full flow: register/login, browse resources, book/cancel a
+slot, and an Admin-only resource management page. Backend and frontend are
+both fully wired end to end. See
 `docs/adr/0001-time-slot-concurrency-strategy.md` for the concurrency
-design.
+design, and `frontend/README.md` for the client's structure.
 
 ## Problem
 
@@ -33,7 +33,7 @@ tests/
   ResourceBooking.Domain.Tests         - unit tests for domain invariants
   ResourceBooking.Infrastructure.Tests - persistence + concurrency tests (SQLite)
   ResourceBooking.Api.Tests            - HTTP-level integration tests (SQLite)
-frontend/                         - React + TypeScript client
+frontend/                         - React + TypeScript client (see frontend/README.md)
 ```
 
 ## Tech stack
@@ -115,6 +115,6 @@ validation failures with a per-field `errors` object.
 - [x] Booking conflict-prevention logic + unit tests
 - [x] REST API: resources CRUD, booking create/cancel, availability query
 - [x] Auth (JWT) + role-based authorization
-- [ ] Frontend booking flow + admin dashboard
+- [x] Frontend booking flow + admin dashboard
 - [ ] Background reminder notifications, availability caching
 - [ ] CI/CD deployment to Azure
