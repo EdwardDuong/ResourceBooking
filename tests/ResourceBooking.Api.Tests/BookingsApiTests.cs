@@ -126,6 +126,45 @@ public class BookingsApiTests : IClassFixture<CustomWebApplicationFactory>, IAsy
     }
 
     [Fact]
+    public async Task GetAvailability_AfterCachedRead_ReflectsBookingMadeImmediately()
+    {
+        var resourceId = await CreateResourceAsync();
+        var slotStart = NextAlignedFutureSlot();
+
+        // Populate the cache with a "this slot is open" result before booking it.
+        var beforeBooking = await GetAvailabilityAsync(resourceId, slotStart);
+        Assert.True(beforeBooking.Slots.Single(s => s.SlotStart == slotStart).IsAvailable);
+
+        var createResponse = await _client.PostAsJsonAsync(
+            "/api/bookings", new CreateBookingRequest(resourceId, slotStart));
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+
+        var afterBooking = await GetAvailabilityAsync(resourceId, slotStart);
+        Assert.False(afterBooking.Slots.Single(s => s.SlotStart == slotStart).IsAvailable);
+    }
+
+    [Fact]
+    public async Task GetAvailability_AfterCachedRead_ReflectsCancellationImmediately()
+    {
+        var resourceId = await CreateResourceAsync();
+        var slotStart = NextAlignedFutureSlot();
+
+        var createResponse = await _client.PostAsJsonAsync(
+            "/api/bookings", new CreateBookingRequest(resourceId, slotStart));
+        var bookingId = await createResponse.Content.ReadFromJsonAsync<Guid>();
+
+        // Populate the cache with a "this slot is taken" result before cancelling.
+        var beforeCancel = await GetAvailabilityAsync(resourceId, slotStart);
+        Assert.False(beforeCancel.Slots.Single(s => s.SlotStart == slotStart).IsAvailable);
+
+        var cancelResponse = await _client.DeleteAsync($"/api/bookings/{bookingId}");
+        Assert.Equal(HttpStatusCode.NoContent, cancelResponse.StatusCode);
+
+        var afterCancel = await GetAvailabilityAsync(resourceId, slotStart);
+        Assert.True(afterCancel.Slots.Single(s => s.SlotStart == slotStart).IsAvailable);
+    }
+
+    [Fact]
     public async Task GetMine_OnlyReturnsCallersOwnBookings()
     {
         var resourceId = await CreateResourceAsync();
@@ -147,6 +186,14 @@ public class BookingsApiTests : IClassFixture<CustomWebApplicationFactory>, IAsy
         var response = await _client.PostAsJsonAsync(
             "/api/resources", new CreateResourceCommand($"Room {Guid.NewGuid()}", null));
         return await response.Content.ReadFromJsonAsync<Guid>();
+    }
+
+    private async Task<ResourceAvailabilityDto> GetAvailabilityAsync(Guid resourceId, DateTimeOffset slotStart)
+    {
+        var date = DateOnly.FromDateTime(slotStart.UtcDateTime);
+        var response = await _client.GetAsync(
+            $"/api/bookings/availability?resourceId={resourceId}&date={date:yyyy-MM-dd}");
+        return (await response.Content.ReadFromJsonAsync<ResourceAvailabilityDto>())!;
     }
 
     private static DateTimeOffset NextAlignedFutureSlot()
