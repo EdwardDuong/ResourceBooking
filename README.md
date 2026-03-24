@@ -4,10 +4,11 @@ A resource booking/reservation system built to demonstrate production-oriented
 engineering practices: clean architecture, tested domain logic, a documented
 concurrency strategy, containerized local development, and CI.
 
-**Status: frontend booking flow and admin dashboard complete.** The React
-client covers the full flow: register/login, browse resources, book/cancel a
-slot, and an Admin-only resource management page. Backend and frontend are
-both fully wired end to end. See
+**Status: availability caching complete.** Computed availability grids are
+cached in-process and explicitly invalidated on every booking/cancellation,
+so a popular resource doesn't force a full booking-table scan on every page
+load, without ever serving stale availability. Background reminders and
+CI/CD to Azure are next. See
 `docs/adr/0001-time-slot-concurrency-strategy.md` for the concurrency
 design, and `frontend/README.md` for the client's structure.
 
@@ -116,5 +117,6 @@ validation failures with a per-field `errors` object.
 - [x] REST API: resources CRUD, booking create/cancel, availability query
 - [x] Auth (JWT) + role-based authorization
 - [x] Frontend booking flow + admin dashboard
-- [ ] Background reminder notifications, availability caching
-- [ ] CI/CD deployment to Azure
+- [x] Availability caching
+- [ ] Background reminder notifications
+- [ ] CI/CD deployment to Azure (free-tier App Service + free-tier SQL Database)
