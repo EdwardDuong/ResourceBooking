@@ -8,10 +8,12 @@ namespace ResourceBooking.Application.Bookings.Commands.CancelBooking;
 public class CancelBookingCommandHandler : IRequestHandler<CancelBookingCommand>
 {
     private readonly IBookingRepository _bookingRepository;
+    private readonly IAvailabilityCache _availabilityCache;
 
-    public CancelBookingCommandHandler(IBookingRepository bookingRepository)
+    public CancelBookingCommandHandler(IBookingRepository bookingRepository, IAvailabilityCache availabilityCache)
     {
         _bookingRepository = bookingRepository;
+        _availabilityCache = availabilityCache;
     }
 
     public async Task Handle(CancelBookingCommand request, CancellationToken cancellationToken)
@@ -27,5 +29,8 @@ public class CancelBookingCommandHandler : IRequestHandler<CancelBookingCommand>
         booking.Cancel();
 
         await _bookingRepository.UpdateAsync(booking, cancellationToken);
+
+        await _availabilityCache.InvalidateAsync(
+            booking.ResourceId, DateOnly.FromDateTime(booking.SlotStart.UtcDateTime), cancellationToken);
     }
 }

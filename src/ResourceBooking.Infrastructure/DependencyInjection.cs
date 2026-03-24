@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ResourceBooking.Application.Common.Interfaces;
+using ResourceBooking.Infrastructure.Caching;
 using ResourceBooking.Infrastructure.Persistence;
 using ResourceBooking.Infrastructure.Persistence.Repositories;
 using ResourceBooking.Infrastructure.Security;
@@ -23,6 +24,9 @@ public static class DependencyInjection
 
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
         services.AddScoped<ITokenGenerator, JwtTokenGenerator>();
+
+        services.AddMemoryCache();
+        services.AddSingleton<IAvailabilityCache, MemoryAvailabilityCache>();
 
         return services;
     }

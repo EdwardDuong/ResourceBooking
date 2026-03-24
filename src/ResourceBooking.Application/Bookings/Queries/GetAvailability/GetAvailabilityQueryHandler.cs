@@ -15,17 +15,27 @@ public class GetAvailabilityQueryHandler : IRequestHandler<GetAvailabilityQuery,
 {
     private readonly IResourceRepository _resourceRepository;
     private readonly IBookingRepository _bookingRepository;
+    private readonly IAvailabilityCache _availabilityCache;
 
     public GetAvailabilityQueryHandler(
-        IResourceRepository resourceRepository, IBookingRepository bookingRepository)
+        IResourceRepository resourceRepository,
+        IBookingRepository bookingRepository,
+        IAvailabilityCache availabilityCache)
     {
         _resourceRepository = resourceRepository;
         _bookingRepository = bookingRepository;
+        _availabilityCache = availabilityCache;
     }
 
     public async Task<ResourceAvailabilityDto> Handle(
         GetAvailabilityQuery request, CancellationToken cancellationToken)
     {
+        var cached = await _availabilityCache.GetAsync(request.ResourceId, request.Date, cancellationToken);
+        if (cached is not null)
+        {
+            return cached;
+        }
+
         _ = await _resourceRepository.GetByIdAsync(request.ResourceId, cancellationToken)
             ?? throw new NotFoundException(nameof(Resource), request.ResourceId);
 
@@ -42,6 +52,8 @@ public class GetAvailabilityQueryHandler : IRequestHandler<GetAvailabilityQuery,
             slots.Add(new AvailabilitySlotDto(slotStart, IsAvailable: !takenSlotSet.Contains(slotStart)));
         }
 
-        return new ResourceAvailabilityDto(request.ResourceId, request.Date, slots);
+        var availability = new ResourceAvailabilityDto(request.ResourceId, request.Date, slots);
+        await _availabilityCache.SetAsync(request.ResourceId, request.Date, availability, cancellationToken);
+        return availability;
     }
 }
