@@ -16,6 +16,7 @@ public class Booking
     public BookingStatus Status { get; private set; }
     public DateTimeOffset CreatedAtUtc { get; private set; }
     public DateTimeOffset? CancelledAtUtc { get; private set; }
+    public DateTimeOffset? ReminderSentAtUtc { get; private set; }
 
     private Booking() { }
 
@@ -48,5 +49,15 @@ public class Booking
 
         Status = BookingStatus.Cancelled;
         CancelledAtUtc = DateTimeOffset.UtcNow;
+    }
+
+    public void MarkReminderSent()
+    {
+        if (ReminderSentAtUtc is not null)
+        {
+            throw new InvalidOperationException("A reminder has already been sent for this booking.");
+        }
+
+        ReminderSentAtUtc = DateTimeOffset.UtcNow;
     }
 }

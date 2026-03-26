@@ -73,4 +73,23 @@ public class BookingTests
 
         Assert.Throws<InvalidOperationException>(() => booking.Cancel());
     }
+
+    [Fact]
+    public void MarkReminderSent_WhenNotYetSent_StampsTimestamp()
+    {
+        var booking = new Booking(Guid.NewGuid(), Guid.NewGuid(), ArbitrarySlot());
+
+        booking.MarkReminderSent();
+
+        Assert.NotNull(booking.ReminderSentAtUtc);
+    }
+
+    [Fact]
+    public void MarkReminderSent_WhenAlreadySent_Throws()
+    {
+        var booking = new Booking(Guid.NewGuid(), Guid.NewGuid(), ArbitrarySlot());
+        booking.MarkReminderSent();
+
+        Assert.Throws<InvalidOperationException>(() => booking.MarkReminderSent());
+    }
 }

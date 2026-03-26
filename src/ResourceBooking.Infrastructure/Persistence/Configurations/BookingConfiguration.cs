@@ -42,6 +42,8 @@ public class BookingConfiguration : IEntityTypeConfiguration<Booking>
         builder.Property(b => b.CreatedAtUtc)
             .IsRequired();
 
+        builder.Property(b => b.ReminderSentAtUtc);
+
         // Filtered so a cancelled booking doesn't permanently lock its slot -
         // only Pending/Confirmed/Completed rows compete for uniqueness.
         builder.HasIndex(b => new { b.ResourceId, b.SlotStart })
