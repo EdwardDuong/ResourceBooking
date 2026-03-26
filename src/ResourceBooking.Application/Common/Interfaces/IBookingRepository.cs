@@ -32,4 +32,11 @@ public interface IBookingRepository
     /// bookings - the caller decides whether to show them.
     /// </summary>
     Task<IReadOnlyList<Booking>> GetByUserAsync(Guid userId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Active (Pending/Confirmed) bookings whose slot falls in
+    /// (nowUtc, reminderWindowEndUtc] and haven't had a reminder sent yet.
+    /// </summary>
+    Task<IReadOnlyList<Booking>> GetBookingsDueForReminderAsync(
+        DateTimeOffset nowUtc, DateTimeOffset reminderWindowEndUtc, CancellationToken cancellationToken);
 }

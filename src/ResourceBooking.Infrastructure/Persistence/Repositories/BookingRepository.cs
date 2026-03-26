@@ -61,4 +61,21 @@ public class BookingRepository : IBookingRepository
             .Where(b => b.RequestedByUserId == userId)
             .OrderByDescending(b => b.SlotStart)
             .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<Booking>> GetBookingsDueForReminderAsync(
+        DateTimeOffset nowUtc, DateTimeOffset reminderWindowEndUtc, CancellationToken cancellationToken)
+    {
+        // Same pattern as GetTakenSlotStartsAsync: Status filtering happens
+        // client-side because the SQLite provider can't translate a
+        // comparison against the string-converted enum.
+        var candidates = await _dbContext.Bookings
+            .Where(b => b.SlotStart > nowUtc
+                && b.SlotStart <= reminderWindowEndUtc
+                && b.ReminderSentAtUtc == null)
+            .ToListAsync(cancellationToken);
+
+        return candidates
+            .Where(b => b.Status is BookingStatus.Pending or BookingStatus.Confirmed)
+            .ToList();
+    }
 }
