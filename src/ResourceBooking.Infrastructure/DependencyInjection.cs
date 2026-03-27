@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ResourceBooking.Application.Common.Interfaces;
+using ResourceBooking.Infrastructure.BackgroundJobs;
 using ResourceBooking.Infrastructure.Caching;
 using ResourceBooking.Infrastructure.Notifications;
 using ResourceBooking.Infrastructure.Persistence;
@@ -30,6 +31,7 @@ public static class DependencyInjection
         services.AddSingleton<IAvailabilityCache, MemoryAvailabilityCache>();
 
         services.AddSingleton<INotificationSender, LoggingNotificationSender>();
+        services.AddHostedService<BookingReminderBackgroundService>();
 
         return services;
     }
