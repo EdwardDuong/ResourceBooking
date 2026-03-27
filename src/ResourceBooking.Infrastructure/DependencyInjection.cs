@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ResourceBooking.Application.Common.Interfaces;
 using ResourceBooking.Infrastructure.Caching;
+using ResourceBooking.Infrastructure.Notifications;
 using ResourceBooking.Infrastructure.Persistence;
 using ResourceBooking.Infrastructure.Persistence.Repositories;
 using ResourceBooking.Infrastructure.Security;
@@ -27,6 +28,8 @@ public static class DependencyInjection
 
         services.AddMemoryCache();
         services.AddSingleton<IAvailabilityCache, MemoryAvailabilityCache>();
+
+        services.AddSingleton<INotificationSender, LoggingNotificationSender>();
 
         return services;
     }
